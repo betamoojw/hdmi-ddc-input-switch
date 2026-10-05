@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" font-family="system-ui, -apple-system, Segoe UI, sans-serif" role="img" aria-labelledby="t d">
+  <title id="t">Wiring the switches</title>
+  <desc id="d">The underside of the lid with the four switches. Short jumper wires join the same pin on every switch (ground); one wire runs from there to the Feather's GND. The other pin of each switch gets its own wire: key 1 to A0, key 2 to A1, key 3 to A2, key 4 to A3. Upside down, key 1 is on the right.</desc>
+  <rect width="900" height="600" rx="14" fill="#f7f8fa"/>
+
+  <text x="40" y="42" font-size="20" font-weight="700" fill="#1d2128">Underside of the lid (switch pins facing you)</text>
+  <text x="40" y="66" font-size="14" fill="#5f6672">Upside down, <tspan font-weight="700" fill="#1d2128">key 1 (HDMI 1) is on the right</tspan>. The back of the case is at the top.</text>
+
+  <!-- wires out to the Feather -->
+  <g font-size="15" font-weight="700" text-anchor="middle" fill="#1d2128">
+    <rect x="150" y="92" width="600" height="34" rx="8" fill="#23233f"/>
+    <text x="450" y="114" fill="#ffffff">to the Feather (about 10 cm, enough to open the lid)</text>
+  </g>
+
+  <!-- switch plate strip -->
+  <rect x="130" y="230" width="640" height="200" rx="10" fill="#d9dce1"/>
+
+  <!-- switches: centres x = 690 (key 1), 538, 386, 234; y = 330. 8 px per mm. -->
+  <g id="sw">
+    <g fill="#3b3f46" stroke="#22252a" stroke-width="2">
+      <rect x="634" y="274" width="112" height="112" rx="8"/>
+      <rect x="482" y="274" width="112" height="112" rx="8"/>
+      <rect x="330" y="274" width="112" height="112" rx="8"/>
+      <rect x="178" y="274" width="112" height="112" rx="8"/>
+    </g>
+    <!-- centre posts -->
+    <g fill="#2a2d33" stroke="#555b64" stroke-width="2">
+      <circle cx="690" cy="330" r="16"/><circle cx="538" cy="330" r="16"/>
+      <circle cx="386" cy="330" r="16"/><circle cx="234" cy="330" r="16"/>
+    </g>
+  </g>
+
+  <!-- signal wires: from the signal pin (+3.81, -2.54 mm, seen from below) up to the bundle -->
+  <g fill="none" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M720 310 C720 250 700 190 700 126" stroke="#f2a33a"/>
+    <path d="M568 310 C568 250 590 190 590 126" stroke="#4fa3e0"/>
+    <path d="M416 310 C416 250 450 190 450 126" stroke="#5cc28a"/>
+    <path d="M264 310 C264 250 300 190 300 126" stroke="#d97bd0"/>
+  </g>
+
+  <!-- ground: ONE continuous wire. Its end is soldered to key 4; at keys 3, 2 and 1 a short
+       window is stripped in the insulation and the bare part soldered to the pin; then it
+       carries on to the Feather. One wire per pin everywhere. -->
+  <path d="M214 289 H670 C660 230 650 180 650 126" fill="none" stroke="#1d2128" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <g stroke="#c98a3a" stroke-width="7" stroke-linecap="butt">
+    <line x1="200" y1="289" x2="234" y2="289"/>
+    <line x1="344" y1="289" x2="388" y2="289"/>
+    <line x1="496" y1="289" x2="540" y2="289"/>
+    <line x1="648" y1="289" x2="692" y2="289"/>
+  </g>
+
+  <!-- pins on top of the wires -->
+  <g stroke="#7a5a12" stroke-width="2" fill="#e0b545">
+    <circle cx="720" cy="310" r="7"/><circle cx="568" cy="310" r="7"/>
+    <circle cx="416" cy="310" r="7"/><circle cx="264" cy="310" r="7"/>
+    <circle cx="670" cy="289" r="7"/><circle cx="518" cy="289" r="7"/>
+    <circle cx="366" cy="289" r="7"/><circle cx="214" cy="289" r="7"/>
+  </g>
+
+  <!-- wire labels at the bundle -->
+  <g font-size="14" font-weight="700" text-anchor="middle">
+    <rect x="276" y="140" width="48" height="24" rx="5" fill="#d97bd0"/><text x="300" y="157" fill="#1d2128">A3</text>
+    <rect x="426" y="140" width="48" height="24" rx="5" fill="#5cc28a"/><text x="450" y="157" fill="#1d2128">A2</text>
+    <rect x="566" y="140" width="48" height="24" rx="5" fill="#4fa3e0"/><text x="590" y="157" fill="#1d2128">A1</text>
+    <rect x="626" y="140" width="48" height="24" rx="5" fill="#ffffff" stroke="#1d2128" stroke-width="2"/><text x="650" y="157" fill="#1d2128">GND</text>
+    <rect x="684" y="140" width="48" height="24" rx="5" fill="#f2a33a"/><text x="708" y="157" fill="#1d2128">A0</text>
+  </g>
+
+  <!-- key labels -->
+  <g font-size="15" text-anchor="middle" fill="#1d2128">
+    <text x="690" y="412" font-weight="700">Key 1</text><text x="538" y="412" font-weight="700">Key 2</text>
+    <text x="386" y="412" font-weight="700">Key 3</text><text x="234" y="412" font-weight="700">Key 4</text>
+  </g>
+  <g font-size="13" text-anchor="middle" fill="#5f6672">
+    <text x="690" y="428">HDMI 1</text><text x="538" y="428">HDMI 2</text>
+    <text x="386" y="428">DP</text><text x="234" y="428">USB-C</text>
+  </g>
+
+  <!-- callouts -->
+  <g font-size="13" fill="#5f6672">
+    <line x1="150" y1="212" x2="382" y2="285" stroke="#9aa3ad" stroke-width="1.5"/>
+    <text x="40" y="196">bare window: cut the</text>
+    <text x="40" y="212">insulation, slide it apart</text>
+    <line x1="796" y1="300" x2="728" y2="310" stroke="#9aa3ad" stroke-width="1.5"/>
+    <text x="800" y="296">signal pin</text>
+    <line x1="796" y1="270" x2="677" y2="287" stroke="#9aa3ad" stroke-width="1.5"/>
+    <text x="800" y="266">ground pin</text>
+  </g>
+
+  <!-- notes -->
+  <line x1="40" y1="460" x2="860" y2="460" stroke="#d5d9df" stroke-width="1.5"/>
+  <g font-size="14" fill="#5f6672">
+    <text x="40" y="488"><tspan font-weight="700" fill="#1d2128">Ground:</tspan> one wire, same pin on every switch. Solder its end to key 4, strip a 3 mm window</text>
+    <text x="40" y="508">at keys 3, 2 and 1 (cut the insulation, slide it apart), solder each, then run it on to the Feather's GND.</text>
+    <text x="40" y="536"><tspan font-weight="700" fill="#1d2128">Signals:</tspan> one wire from each switch's other pin, key 1 → A0 … key 4 → A3.</text>
+    <text x="40" y="564"><tspan font-weight="700" fill="#1d2128">Tips:</tspan> tin pins and wires first, make each joint quickly (the plate is PLA), keep joints low,</text>
+    <text x="40" y="584">and lay the wires flat: there is only about 1.5 mm between the pins and the tray floor.</text>
+  </g>
+</svg>

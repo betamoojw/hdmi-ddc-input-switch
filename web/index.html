@@ -1,0 +1,801 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HDMI-DDC Input Switch</title>
+<style>
+  :root {
+    --bg: #f4f5f7; --panel: #ffffff; --ink: #1d2128; --muted: #5f6672; --line: #d9dde3;
+    --accent: #1f6feb; --accent-ink: #ffffff; --ok: #1a7f37; --bad: #c62828; --warn: #9a6700;
+    --field: #ffffff; --code: #eef0f3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #15181d; --panel: #1d2128; --ink: #e6e8eb; --muted: #9aa3ad; --line: #333a44;
+      --accent: #4c8dff; --accent-ink: #0b0d10; --ok: #4ac26b; --bad: #ff6b6b; --warn: #e3b341;
+      --field: #15181d; --code: #262b33;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 920px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 17px; margin: 0 0 12px; }
+  p.lead { color: var(--muted); margin: 0 0 20px; }
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 20px; }
+  .tabs button { background: none; border: 0; border-bottom: 2px solid transparent; color: var(--muted);
+                 padding: 8px 14px; font: inherit; cursor: pointer; }
+  .tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+  section.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+                  padding: 18px; margin-bottom: 16px; }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  button.btn { font: inherit; border-radius: 7px; border: 1px solid var(--line); background: var(--field);
+               color: var(--ink); padding: 6px 12px; cursor: pointer; }
+  button.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  button.btn:disabled { opacity: .5; cursor: default; }
+  button.btn.small { padding: 3px 9px; font-size: 13px; }
+  input, select { font: inherit; color: var(--ink); background: var(--field); border: 1px solid var(--line);
+                  border-radius: 6px; padding: 4px 8px; }
+  input.hex { width: 6.5em; font-family: ui-monospace, Consolas, monospace; }
+  input.name { width: 9em; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 6px 6px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  th { font-size: 13px; color: var(--muted); font-weight: 600; }
+  .status { font-size: 14px; color: var(--muted); }
+  .ok { color: var(--ok); } .bad { color: var(--bad); } .warn { color: var(--warn); }
+  .steps { margin: 0; padding-left: 20px; }
+  .steps li { margin-bottom: 14px; }
+  .note { font-size: 14px; color: var(--muted); }
+  code { background: var(--code); padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+  #log { font: 12.5px/1.45 ui-monospace, Consolas, monospace; background: var(--code); border-radius: 8px;
+         padding: 10px; height: 180px; overflow: auto; white-space: pre-wrap; word-break: break-all; margin: 0; }
+  .errors { color: var(--bad); margin: 8px 0 0; padding-left: 18px; }
+  .hidden { display: none !important; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px 18px; }
+  label.field { display: flex; flex-direction: column; gap: 3px; font-size: 13px; color: var(--muted); }
+  label.field > * { color: var(--ink); font-size: 15px; }
+  .table-wrap { overflow-x: auto; }
+  #unsupported { border-color: var(--bad); }
+  .guide img { display: block; max-width: 100%; height: auto; margin: 14px auto 0; border-radius: 8px; }
+  .guide img.hero { margin: 0 auto 14px; }
+  .guide ul, .guide ol { padding-left: 22px; margin: 8px 0; }
+  .guide li { margin-bottom: 6px; }
+  .guide p { margin: 8px 0; }
+  .guide table { margin-top: 6px; }
+  .guide td:first-child { white-space: nowrap; }
+  @media (max-width: 600px) { .guide td:first-child { white-space: normal; } }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <h1>HDMI-DDC Input Switch</h1>
+  <p class="lead">A one-press monitor input switch. Build guide, setup and firmware updates, all on this page.
+    Source, print files and issues: <a href="https://github.com/jeyeager65/hdmi-ddc-input-switch">GitHub</a>.</p>
+
+  <section id="unsupported" class="panel hidden">
+    <h2 class="bad">This browser can't talk to the switch</h2>
+    <p>The page uses Web Serial, which Chrome and Edge support (desktop, not phones). It also needs the page served over https or from <code>localhost</code>.</p>
+  </section>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="guide">Guide</button>
+    <button role="tab" aria-selected="false" data-tab="configure">Configure</button>
+    <button role="tab" aria-selected="false" data-tab="install">Install firmware</button>
+  </nav>
+
+  <!-- ===================== GUIDE ===================== -->
+  <div id="tab-guide" class="guide">
+    <section class="panel">
+      <img class="hero" src="images/03-three-quarter.png" alt="The switch: a gray tilted case with four black keys labelled HDMI 1, HDMI 2, DP and USB C, an inlaid ultrawide monitor and two small R and B buttons">
+      <p>A small desk box that switches your monitor's input with one key press. It plugs into a spare HDMI port on the monitor and sends the same "change input" command the monitor's own menu does (DDC/CI), so it works with whatever is connected to the other inputs: a PC on DisplayPort, a laptop on USB-C, a console on HDMI.</p>
+      <ul>
+        <li>No software on your computers, no network, nothing to pair. Plug it in and press a key.</li>
+        <li>Pressing the key for its own HDMI port shows an info screen with the current setup.</li>
+        <li>What each key does is set up from this page and stored on the switch.</li>
+      </ul>
+      <p class="note">Contents: <a href="#g-parts">Parts</a> · <a href="#g-print">Printing</a> · <a href="#g-wire">Wiring</a> · <a href="#g-assemble">Assembly</a> · <a href="#g-monitor">Monitor setup</a> · <a href="#g-use">Using it</a> · <a href="#g-presets">Adding a monitor</a> · <a href="#g-trouble">Troubleshooting</a></p>
+    </section>
+
+    <section class="panel" id="g-parts">
+      <h2>Parts</h2>
+      <table>
+        <thead><tr><th>Part</th><th>Qty</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td><a href="https://www.adafruit.com/product/5710" target="_blank" rel="noopener">Adafruit Feather RP2040 with DVI Output Port</a> (product 5710)</td><td>1</td><td>The brains, and the HDMI connection to the monitor</td></tr>
+          <tr><td>MX-style key switches</td><td>4</td><td>Built with <a href="https://www.adafruit.com/product/4954" target="_blank" rel="noopener">Kailh Tactile Brown, 10 pack</a> (Adafruit 4954). Any MX-compatible switch fits.</td></tr>
+          <tr><td>HDMI cable</td><td>1</td><td>A short, flexible one; stiff cables drag a light box around</td></tr>
+          <tr><td>USB-C cable</td><td>1</td><td>Power, and setup from a computer</td></tr>
+          <tr><td>Heat-set insert M2.5 × 4 mm × 3.5 mm OD</td><td>4</td><td>Board standoffs</td></tr>
+          <tr><td>Screw M2.5 × 6 mm</td><td>4</td><td>Board to tray</td></tr>
+          <tr><td>Heat-set insert M3 × 4 mm × 5 mm OD</td><td>4</td><td>Lid: 2 front, 2 back</td></tr>
+          <tr><td>Screw M3 × 6 mm, button head</td><td>4</td><td>2 up through the floor, 2 through the back wall</td></tr>
+          <tr><td>Adhesive rubber feet</td><td>4</td><td>Any size; keep them off the two front screw holes</td></tr>
+          <tr><td>Hook-up wire, superglue</td><td></td><td>Wire for the keys; glue for the switch plate</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="panel" id="g-print">
+      <h2>Printing</h2>
+      <p>Everything is PLA at 0.2 mm layers with <b>no supports</b>. The 3MF files with more than one part are multi-colour: load them as <i>one object with multiple parts</i> and pick a filament per part.</p>
+      <table>
+        <thead><tr><th>File</th><th>Orientation</th><th>Colours used here</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td><a href="print/keycaps.3mf" download><code>keycaps.3mf</code></a></td><td>face down (as exported)</td><td>Keycaps black, Legends yellow</td><td></td></tr>
+          <tr><td><a href="print/case-buttons.3mf" download><code>case-buttons.3mf</code></a></td><td>top down (as exported)</td><td>Buttons black, Letters yellow</td><td><b>Use a brim</b>: small footprint</td></tr>
+          <tr><td><a href="print/case-plate.stl" download><code>case-plate.stl</code></a></td><td>glue side down (as exported)</td><td>black (hidden)</td><td>Holds the switches</td></tr>
+          <tr><td><a href="print/case-lid.3mf" download><code>case-lid.3mf</code></a></td><td>top face down (as exported)</td><td>Lid gray, frame black, screen blue</td><td></td></tr>
+          <tr><td><a href="print/case-tray.stl" download><code>case-tray.stl</code></a></td><td>upright (as exported)</td><td>black</td><td>One-layer caps over the screw holes: push the screw through</td></tr>
+        </tbody>
+      </table>
+      <p class="note">Printing an MX plate test first? <a href="print/switch-coupon.stl" download><code>switch-coupon</code></a> has cut-outs from 13.9 to 14.2 mm, and <a href="print/stem-fit-test.stl" download><code>stem-fit-test</code></a> has keycap stems from 1.20 to 1.40 mm. The case uses 14.0 and 1.30.</p>
+      <img src="images/02-exploded.png" alt="Exploded view: keycaps, lid with the monitor inlay and R/B buttons, switch plate with four switches, the Feather board, tray">
+    </section>
+
+    <section class="panel" id="g-wire">
+      <h2>Wiring</h2>
+      <p>Each key switch has two pins. Wire <b>one pin of each key to its own Feather pin</b>, and <b>all the other pins together to GND</b>. No resistors: the Feather's internal pull-ups are used.</p>
+      <img src="images/wiring.svg" alt="Wiring: key 1 to A0, key 2 to A1, key 3 to A2, key 4 to A3; the other pin of every key to a shared GND">
+      <p>On the switches, the pins are short, so give each pin <b>one</b> wire. Run a single ground wire along the same pin of every switch: solder its end to key 4, then at keys 3, 2 and 1 cut the insulation and slide it apart to open a 3 mm bare window, and solder that. Upside down, key 1 is on the right.</p>
+      <img src="images/wiring-switches.svg" alt="Underside of the lid: one ground wire runs along the same pin of all four switches through stripped windows, then to GND; each switch's other pin has its own wire to A0 to A3, key 1 on the right">
+      <p><b>Don't fit pin headers.</b> The board sits low in the case, so solder the wires straight into the A0–A3 and GND holes from the top and keep the joints low.</p>
+      <p>A0–A3 are just the defaults. <b>Everything is configurable</b>: each key can go to any input your monitor has, show the info screen, or do nothing, and any free pin can be used. The inputs here are the author's setup (two HDMI, DP, USB-C). Set your own in Configure, and print keycaps with your own legends (<code>LEGENDS</code> in <code>case/keycaps.py</code>).</p>
+      <table>
+        <thead><tr><th>Key (left to right)</th><th>Feather pin</th><th>Default input</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>A0</td><td>HDMI 1</td></tr>
+          <tr><td>2</td><td>A1</td><td>HDMI 2</td></tr>
+          <tr><td>3</td><td>A2</td><td>DP</td></tr>
+          <tr><td>4</td><td>A3</td><td>USB-C</td></tr>
+        </tbody>
+      </table>
+      <p>Then the Feather's <b>HDMI</b> goes to a spare HDMI port on the monitor (HDMI 2 here), and <b>USB-C</b> to power. Any USB charger works once it's set up.</p>
+      <p class="warn"><b>Leave the Feather's STEMMA QT connector empty.</b> It shares the I²C bus with the monitor's DDC lines.</p>
+    </section>
+
+    <section class="panel" id="g-assemble">
+      <h2>Assembly</h2>
+      <ol>
+        <li>Melt the 4 × M2.5 heat-set inserts into the tray's standoffs.
+          <img src="images/step1-tray-inserts.png" alt="Tray with four brass M2.5 inserts above the board standoffs"></li>
+        <li>Melt the M3 inserts into the lid: 2 into the front posts, 2 into the back posts. Do the back ones with the lid lying on its back, so you press straight down.
+          <img src="images/step2-lid-inserts.png" alt="Lid from below: two inserts under the front posts and two behind the rear posts"></li>
+        <li>Screw the Feather to the tray with the 4 × M2.5 × 6 screws, then wire the keys (see Wiring).
+          <img src="images/step3-board.png" alt="Feather board above the tray with four screws lined up over the inserts"></li>
+        <li>Clip the four switches into the switch plate. Drop the R and B buttons into their holes from under the lid, then glue the plate in place: its two pins line it up, and its tab traps the buttons.
+          <img src="images/step4-plate-buttons.png" alt="Switch plate with four switches below the lid, and the R and B buttons below their holes"></li>
+        <li>Lower the lid onto the tray. Fit 2 × M3 screws up through the floor at the front and 2 through the back wall. Press on the keycaps and stick on the feet.
+          <img src="images/step5-close-up.png" alt="Lid lifted above the tray, keycaps above the switches, two screws below the floor and two behind the back wall"></li>
+      </ol>
+      <p class="note">The underside of the lid, for reference:</p>
+      <img src="images/04-lid-underside.png" alt="Underside of the lid: front screw posts, locating pins for the switch plate, pockets for the R and B buttons, and the two rear screw posts">
+    </section>
+
+    <section class="panel" id="g-monitor">
+      <h2>Monitor setup</h2>
+      <ul>
+        <li>Make sure <b>DDC/CI</b> is on in the monitor's menu, if it has that setting.</li>
+        <li>Turn off <b>Auto Input Switch</b> (LG) or anything like it. Otherwise the monitor may jump to the switch's info screen whenever a computer sleeps.</li>
+        <li>LG UltraGear monitors ignore the standard input command. The <i>LG UltraGear</i> preset uses LG's own command, tested on the 45GR75DC-B.</li>
+      </ul>
+    </section>
+
+    <section class="panel" id="g-use">
+      <h2>Using it</h2>
+      <ul>
+        <li><b>Keys</b> switch the monitor to their input. The key for the switch's own port (HDMI 2 here) shows the info screen.</li>
+        <li><b>R</b> restarts the switch. <b>B</b> is a spare key (the Feather's BOOT button) you can give a job in Configure.</li>
+        <li><b>Factory reset</b> without a computer: hold keys 1 and 2 while plugging in USB.</li>
+        <li><b>Configure</b> (tab above, Chrome or Edge): connect, then pick a preset or enter your monitor's values, use <b>Try</b> to test inputs, and choose what each key does. Marking <i>This computer</i> makes Try switch back after 10 seconds.</li>
+        <li><b>Install firmware</b> (tab above) updates the switch. Your settings are kept.</li>
+      </ul>
+    </section>
+
+    <section class="panel" id="g-presets">
+      <h2>Adding a monitor</h2>
+      <p>Most monitors use the standard input command (VCP <code>0x60</code> from source <code>0x51</code>), but the value for each input varies by brand. To find yours:</p>
+      <ol>
+        <li>In Configure, pick <b>MCCS standard</b>, mark <i>This computer</i>, then press <b>Try</b> on each input and watch what the monitor does.</li>
+        <li>Change values until each input switches correctly. Common ones: <code>0x0F</code> DP 1, <code>0x10</code> DP 2, <code>0x11</code> HDMI 1, <code>0x12</code> HDMI 2, and often <code>0x1B</code> USB-C.</li>
+        <li>If nothing reacts, your monitor may use a proprietary command, like LG's VCP <code>0xF4</code> from <code>0x50</code>.</li>
+        <li>Save it to the switch, and share it: add an entry to <code>web/presets.json</code> in the project and open a pull request.</li>
+      </ol>
+    </section>
+
+    <section class="panel" id="g-trouble">
+      <h2>Troubleshooting</h2>
+      <table>
+        <thead><tr><th>Symptom</th><th>Try</th></tr></thead>
+        <tbody>
+          <tr><td>Scan doesn't find DDC/CI (0x37)</td><td>Check the HDMI cable and port, and that DDC/CI is on in the monitor's menu. Some monitors stop answering in deep standby: wake them first.</td></tr>
+          <tr><td>"ACK" but the input doesn't change</td><td>The monitor heard the command but uses different values: see <a href="#g-presets">Adding a monitor</a>.</td></tr>
+          <tr><td>The info screen says "no signal"</td><td>The Feather's HDMI must be in the port marked as <i>The switch</i>, and the board needs USB power.</td></tr>
+          <tr><td>A key does nothing</td><td>Check its wiring to the right pin and to GND, and that the key has an action in Configure.</td></tr>
+          <tr><td>Install mode doesn't show RPI-RP2</td><td>Hold <b>BOOT</b> (the B button, or the board's button), tap <b>RESET</b> (R), release BOOT.</td></tr>
+          <tr><td>Connect lists nothing</td><td>Use Chrome or Edge on a computer, and close any other program using the switch's serial port.</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+
+  <!-- ===================== CONFIGURE ===================== -->
+  <div id="tab-configure" class="hidden">
+    <section class="panel">
+      <div class="row">
+        <button class="btn primary" id="connect">Connect</button>
+        <button class="btn hidden" id="disconnect">Disconnect</button>
+        <span class="status" id="conn-status">Plug the switch into this computer with USB-C, then Connect.</span>
+      </div>
+    </section>
+
+    <div id="editor" class="hidden">
+      <section class="panel">
+        <h2>Monitor</h2>
+        <div class="grid2">
+          <label class="field">Preset
+            <select id="preset"><option value="">Custom</option></select>
+          </label>
+          <label class="field">Name shown on screen
+            <input id="preset-name" maxlength="23">
+          </label>
+          <label class="field">Input select VCP code
+            <input id="vcp" class="hex" placeholder="0x60">
+          </label>
+          <label class="field">DDC/CI source address
+            <input id="src" class="hex" placeholder="0x51">
+          </label>
+        </div>
+        <p class="note" id="preset-notes"></p>
+      </section>
+
+      <section class="panel">
+        <h2>Inputs</h2>
+        <p class="note">Each input's value is what the monitor expects for "switch to this input". <b>Try</b> sends it now, using the VCP code and source above, so you can find values for a new monitor before saving. If you mark the input <b>this computer</b> uses, Try switches back to it after 10 seconds (remembered in this browser). Mark the input <b>the switch</b> is plugged into: its info screen shows there.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Name</th><th>Value</th><th>This computer</th><th>The switch</th><th></th><th></th></tr></thead>
+            <tbody id="inputs"></tbody>
+          </table>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn small" id="add-input">Add input</button>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <span class="status" id="try-status"></span>
+          <button class="btn small hidden" id="stay">Stay</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Keys</h2>
+        <p class="note">Left to right as on the case. A key can switch to an input, send any VCP command (for example brightness, VCP 0x10), or do nothing. <code>BOOT</code> is the small button on the Feather.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Pin</th><th>Action</th><th>Does</th><th></th></tr></thead>
+            <tbody id="buttons"></tbody>
+          </table>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn small" id="add-button">Add key</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="row">
+          <button class="btn primary" id="save">Save to switch</button>
+          <button class="btn" id="revert">Undo changes</button>
+          <span class="status" id="save-status"></span>
+        </div>
+        <ul class="errors" id="errors"></ul>
+      </section>
+
+      <section class="panel">
+        <h2>Tools</h2>
+        <div class="row">
+          <button class="btn" id="scan">Scan DDC bus</button>
+          <button class="btn" id="factory">Restore factory settings</button>
+          <button class="btn" id="reboot">Restart switch</button>
+          <span class="status" id="tools-status"></span>
+        </div>
+      </section>
+    </div>
+
+    <section class="panel">
+      <h2>Activity</h2>
+      <pre id="log"></pre>
+    </section>
+  </div>
+
+  <!-- ===================== INSTALL ===================== -->
+  <div id="tab-install" class="hidden">
+    <section class="panel">
+      <h2>Install or update firmware</h2>
+      <ol class="steps">
+        <li><b>Put the switch in install mode.</b><br>
+          <button class="btn primary" id="to-bootloader" style="margin-top:6px">Enter install mode</button>
+          <span class="status" id="boot-status"></span>
+          <div class="note">Pick the switch's port when asked. A drive called <code>RPI-RP2</code> appears.
+            If nothing happens (new board, or no firmware yet): hold <b>BOOT</b>, tap <b>RESET</b>, release BOOT.</div>
+        </li>
+        <li><b>Copy the firmware onto that drive.</b><br>
+          <button class="btn primary" id="install" style="margin-top:6px">Save firmware to RPI-RP2…</button>
+          <span class="status" id="install-status"></span>
+          <div class="note">In the save dialog, choose the <code>RPI-RP2</code> drive and keep the name. The switch restarts by itself when the copy finishes.
+            Prefer to do it by hand? <a id="fw-link" href="firmware.uf2" download>Download firmware.uf2</a> and drag it onto the drive.
+            Have your own build? <label style="cursor:pointer;text-decoration:underline">use a local .uf2<input type="file" id="fw-file" accept=".uf2" class="hidden"></label>.</div>
+        </li>
+        <li><b>Configure it</b> in the Configure tab. Your settings are kept across firmware updates.</li>
+      </ol>
+    </section>
+  </div>
+</main>
+
+<script>
+"use strict";
+// ---------------------------------------------------------------- utilities
+const $ = (id) => document.getElementById(id);
+const hex = (n) => "0x" + Number(n).toString(16).toUpperCase().padStart(2, "0");
+function parseNum(text) {
+  const t = String(text).trim();
+  if (!t) return NaN;
+  const n = /^0x/i.test(t) ? parseInt(t, 16) : /^[0-9a-f]+h$/i.test(t) ? parseInt(t, 16) : Number(t);
+  return Number.isInteger(n) ? n : NaN;
+}
+function log(text, cls) {
+  const el = $("log");
+  const line = document.createElement("div");
+  if (cls) line.className = cls;
+  line.textContent = new Date().toLocaleTimeString() + "  " + text;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+function setStatus(id, text, cls = "") { const el = $(id); el.textContent = text; el.className = "status " + cls; }
+
+// ---------------------------------------------------------------- tabs
+const TABS = ["guide", "configure", "install"];
+function showTab(name) {
+  document.querySelectorAll(".tabs button").forEach((x) => x.setAttribute("aria-selected", x.dataset.tab === name));
+  for (const t of TABS) $("tab-" + t).classList.toggle("hidden", t !== name);
+}
+document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => {
+  showTab(b.dataset.tab);
+  history.replaceState(null, "", "#" + b.dataset.tab);
+}));
+// Open on: a #tab in the URL, else Configure for returning users, else the Guide.
+// Guide links (#g-...) open the Guide and scroll to the section.
+{
+  const h = location.hash.slice(1);
+  let returning = false;
+  try { returning = localStorage.getItem("hdmi-ddc.connected") === "1"; } catch {}
+  if (TABS.includes(h)) showTab(h);
+  else if (h.startsWith("g-")) { showTab("guide"); document.getElementById(h)?.scrollIntoView(); }
+  else showTab(returning ? "configure" : "guide");
+}
+document.querySelectorAll('.guide a[href^="#g-"]').forEach((a) => a.addEventListener("click", (e) => {
+  e.preventDefault();
+  document.getElementById(a.getAttribute("href").slice(1))?.scrollIntoView({ behavior: "smooth" });
+}));
+if (!("serial" in navigator)) $("unsupported").classList.remove("hidden");
+
+// ---------------------------------------------------------------- serial link
+const link = {
+  port: null, writer: null, reader: null, nextId: 1, pending: new Map(), buffer: "",
+  async open(port) {
+    this.port = port;
+    await port.open({ baudRate: 115200 });
+    const enc = new TextEncoderStream();
+    enc.readable.pipeTo(port.writable);
+    this.writer = enc.writable.getWriter();
+    const dec = new TextDecoderStream();
+    port.readable.pipeTo(dec.writable).catch(() => {});
+    this.reader = dec.readable.getReader();
+    this.readLoop();
+  },
+  async readLoop() {
+    try {
+      for (;;) {
+        const { value, done } = await this.reader.read();
+        if (done) break;
+        this.buffer += value;
+        let i;
+        while ((i = this.buffer.indexOf("\n")) >= 0) {
+          const line = this.buffer.slice(0, i).trim();
+          this.buffer = this.buffer.slice(i + 1);
+          if (line) this.onLine(line);
+        }
+      }
+    } catch (e) { /* port closed */ }
+    onDisconnected();
+  },
+  onLine(line) {
+    let msg = null;
+    if (line.startsWith("{")) { try { msg = JSON.parse(line); } catch {} }
+    if (msg && msg.id !== undefined && this.pending.has(msg.id)) {
+      const { resolve, timer } = this.pending.get(msg.id);
+      clearTimeout(timer);
+      this.pending.delete(msg.id);
+      resolve(msg);
+    } else if (msg && msg.event) {
+      onEvent(msg);
+    } else {
+      log(line);
+    }
+  },
+  request(obj, timeoutMs = 4000) {
+    const id = this.nextId++;
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => { this.pending.delete(id); reject(new Error("no reply from the switch")); }, timeoutMs);
+      this.pending.set(id, { resolve, timer });
+      this.writer.write(JSON.stringify({ ...obj, id }) + "\n").catch(reject);
+    });
+  },
+  async close() {
+    try { await this.reader?.cancel(); } catch {}
+    try { await this.writer?.close(); } catch {}
+    try { await this.port?.close(); } catch {}
+    this.port = this.reader = this.writer = null;
+  },
+};
+
+// ---------------------------------------------------------------- state
+let info = null;        // reply to "version"
+let saved = null;       // config as last read from / saved to the switch
+let cfg = null;         // config being edited
+let presets = [];
+fetch("presets.json").then((r) => r.json()).then((p) => {
+  presets = p;
+  for (const pr of presets) $("preset").add(new Option(pr.name, pr.id));
+}).catch(() => log("Couldn't load presets.json", "warn"));
+
+// ---------------------------------------------------------------- connect
+$("connect").addEventListener("click", async () => {
+  try {
+    const port = await navigator.serial.requestPort({ filters: [{ usbVendorId: 0x239A }] });
+    setStatus("conn-status", "Connecting…");
+    await link.open(port);
+    info = await link.request({ cmd: "version" });
+    const got = await link.request({ cmd: "get" });
+    saved = got.config;
+    loadEditor(structuredClone(saved));
+    setStatus("conn-status", `Connected: firmware ${info.fw}`, "ok");
+    try { localStorage.setItem("hdmi-ddc.connected", "1"); } catch {}
+    log(`Connected (firmware ${info.fw}, config schema ${info.schema})`, "ok");
+    $("connect").classList.add("hidden");
+    $("disconnect").classList.remove("hidden");
+    $("editor").classList.remove("hidden");
+  } catch (e) {
+    if (e.name !== "NotFoundError") setStatus("conn-status", "Couldn't connect: " + e.message, "bad");
+    await link.close();
+  }
+});
+$("disconnect").addEventListener("click", () => link.close());
+function onDisconnected() {
+  $("connect").classList.remove("hidden");
+  $("disconnect").classList.add("hidden");
+  $("editor").classList.add("hidden");
+  setStatus("conn-status", "Disconnected.");
+}
+
+function onEvent(ev) {
+  if (ev.event === "key") {
+    log(`Key ${ev.key + 1} pressed → ${ev.label} (${hex(ev.value)}) ${ev.ack ? "ACK" : "no ACK"}`, ev.ack ? "" : "warn");
+  } else if (ev.event === "boot") {
+    log(`Switch started (firmware ${ev.fw}, settings ${ev.config}, DDC ${ev.ddc ? "found" : "not found"})`);
+  } else {
+    log(JSON.stringify(ev));
+  }
+}
+
+// ---------------------------------------------------------------- editor
+function loadEditor(c) {
+  cfg = c;
+  const match = presets.find((p) => p.vcp === c.vcp && p.src === c.src && p.name === c.preset);
+  $("preset").value = match ? match.id : "";
+  $("preset-notes").textContent = match ? match.notes : "";
+  $("preset-name").value = c.preset;
+  $("vcp").value = hex(c.vcp);
+  $("src").value = hex(c.src);
+  renderInputs();
+  renderButtons();
+  validate();
+}
+
+$("preset").addEventListener("change", () => {
+  const p = presets.find((x) => x.id === $("preset").value);
+  $("preset-notes").textContent = p ? p.notes : "";
+  if (!p) return;
+  cfg.preset = p.name;
+  cfg.vcp = p.vcp;
+  cfg.src = p.src;
+  cfg.inputs = structuredClone(p.inputs);
+  if (cfg.self >= cfg.inputs.length) cfg.self = -1;
+  $("preset-name").value = cfg.preset;
+  $("vcp").value = hex(cfg.vcp);
+  $("src").value = hex(cfg.src);
+  renderInputs();
+  renderButtons();
+  validate();
+});
+$("preset-name").addEventListener("input", (e) => { cfg.preset = e.target.value; validate(); });
+for (const k of ["vcp", "src"]) $(k).addEventListener("input", (e) => { cfg[k] = parseNum(e.target.value); validate(); });
+
+function renderInputs() {
+  const tb = $("inputs");
+  tb.replaceChildren();
+  cfg.inputs.forEach((inp, i) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${i + 1}</td>
+      <td><input class="name" maxlength="${info.nameLen}" value=""></td>
+      <td><input class="hex" value=""></td>
+      <td><input type="radio" name="here" title="The input this computer is connected to" ${returnName === inp.name ? "checked" : ""}></td>
+      <td><input type="radio" name="self" title="The input the switch is plugged into" ${cfg.self === i ? "checked" : ""}></td>
+      <td><button class="btn small">Try</button></td>
+      <td><button class="btn small" title="Remove">✕</button></td>`;
+    const [nameEl, valEl, hereEl, selfEl] = tr.querySelectorAll("input");
+    hereEl.addEventListener("change", () => { returnName = inp.name; writePref(RETURN_KEY, returnName); });
+    const [tryEl, delEl] = tr.querySelectorAll("button");
+    nameEl.value = inp.name;
+    valEl.value = hex(inp.value);
+    nameEl.addEventListener("input", () => {
+      if (returnName === inp.name) { returnName = nameEl.value; writePref(RETURN_KEY, returnName); }
+      inp.name = nameEl.value; renderButtons(); validate();
+    });
+    valEl.addEventListener("input", () => { inp.value = parseNum(valEl.value); validate(); });
+    selfEl.addEventListener("change", () => { cfg.self = i; validate(); });
+    tryEl.addEventListener("click", () => tryInput(inp));
+    delEl.addEventListener("click", () => {
+      cfg.inputs.splice(i, 1);
+      if (cfg.self === i) cfg.self = -1; else if (cfg.self > i) cfg.self--;
+      for (const b of cfg.buttons) if (b.action === "input" && b.input > i) b.input--;
+        else if (b.action === "input" && b.input === i) b.input = -1;
+      renderInputs(); renderButtons(); validate();
+    });
+    tb.appendChild(tr);
+  });
+  $("add-input").disabled = cfg.inputs.length >= info.maxInputs;
+}
+$("add-input").addEventListener("click", () => {
+  cfg.inputs.push({ name: "Input " + (cfg.inputs.length + 1), value: 0 });
+  renderInputs(); renderButtons(); validate();
+});
+
+// --- Try: switch now, then switch back to "your" input after a few seconds.
+// The monitor can't report its current input, so the page asks once which input this
+// computer is on (remembered in this browser) and returns there.
+const RETURN_KEY = "hdmi-ddc.thisComputer";   // remembered by input name
+const RETURN_SECS = 10;   // the monitor needs a few seconds just to sync the new input
+let returnTimer = null;
+
+function readPref(key) { try { return localStorage.getItem(key); } catch { return null; } }
+function writePref(key, val) { try { localStorage.setItem(key, val); } catch {} }
+let returnName = readPref(RETURN_KEY) || "";
+
+function cancelReturn() {
+  clearInterval(returnTimer);
+  returnTimer = null;
+  $("stay").classList.add("hidden");
+}
+$("stay").addEventListener("click", () => {
+  cancelReturn();
+  setStatus("try-status", "Staying on this input.");
+});
+
+async function sendRaw(value) {
+  return link.request({ cmd: "raw", vcp: cfg.vcp, src: cfg.src, value });
+}
+
+async function tryInput(inp) {
+  if (!Number.isInteger(inp.value) || !Number.isInteger(cfg.vcp) || !Number.isInteger(cfg.src)) {
+    setStatus("try-status", "Fix the value, VCP code and source address first.", "bad"); return;
+  }
+  cancelReturn();
+  try {
+    const r = await sendRaw(inp.value);
+    log(`Try ${inp.name} → VCP ${hex(cfg.vcp)} = ${hex(inp.value)}: ${r.ack ? "ACK" : "no ACK"}`);
+    const back = cfg.inputs.find((i) => i.name === returnName);
+    if (!back || back === inp) {
+      const hint = back ? "" : " — mark “This computer” to have Try switch back automatically";
+      setStatus("try-status", `${inp.name}: ${r.ack ? "sent (monitor acknowledged)" : "no acknowledgement"}${hint}`, r.ack ? "ok" : "warn");
+      return;
+    }
+    let left = RETURN_SECS;
+    const tick = () => setStatus("try-status", `${inp.name}${r.ack ? "" : " (no acknowledgement)"} — switching back to ${back.name} in ${left}…`, r.ack ? "ok" : "warn");
+    tick();
+    $("stay").classList.remove("hidden");
+    returnTimer = setInterval(async () => {
+      left--;
+      if (left > 0) { tick(); return; }
+      cancelReturn();
+      try {
+        const rb = await sendRaw(back.value);
+        setStatus("try-status", `Back on ${back.name}.`, rb.ack ? "ok" : "warn");
+        log(`Back to ${back.name} → ${hex(back.value)}: ${rb.ack ? "ACK" : "no ACK"}`);
+      } catch (e) { setStatus("try-status", e.message, "bad"); }
+    }, 1000);
+  } catch (e) { setStatus("try-status", e.message, "bad"); }
+}
+
+function renderButtons() {
+  const tb = $("buttons");
+  tb.replaceChildren();
+  cfg.buttons.forEach((b, i) => {
+    const tr = document.createElement("tr");
+    const pinOpts = info.pins.map((p) => `<option ${p === b.pin ? "selected" : ""}>${p}</option>`).join("");
+    tr.innerHTML = `<td>${i + 1}</td>
+      <td><select class="pin">${pinOpts}</select></td>
+      <td><select class="action">
+            <option value="input">Switch input</option>
+            <option value="vcp">Send VCP</option>
+            <option value="none">Nothing</option></select></td>
+      <td class="does"></td>
+      <td><button class="btn small" title="Remove">✕</button></td>`;
+    tr.querySelector(".pin").addEventListener("change", (e) => { b.pin = e.target.value; validate(); });
+    const act = tr.querySelector(".action");
+    act.value = b.action;
+    act.addEventListener("change", () => {
+      b.action = act.value;
+      if (b.action === "input" && !(b.input >= 0)) b.input = 0;
+      if (b.action === "vcp") { b.vcp ??= 0x10; b.src ??= cfg.src; b.value ??= 50; }
+      renderButtons(); validate();
+    });
+    const does = tr.querySelector(".does");
+    if (b.action === "input") {
+      const sel = document.createElement("select");
+      sel.add(new Option("— pick an input —", "-1"));
+      cfg.inputs.forEach((inp, k) => sel.add(new Option(inp.name, k)));
+      sel.value = String(b.input ?? -1);
+      sel.addEventListener("change", () => { b.input = Number(sel.value); validate(); });
+      does.appendChild(sel);
+    } else if (b.action === "vcp") {
+      does.innerHTML = `VCP <input class="hex v"> = <input class="hex val"> from <input class="hex s">`;
+      const [v, val, s] = does.querySelectorAll("input");
+      v.value = hex(b.vcp); val.value = b.value; s.value = hex(b.src);
+      v.addEventListener("input", () => { b.vcp = parseNum(v.value); validate(); });
+      val.addEventListener("input", () => { b.value = parseNum(val.value); validate(); });
+      s.addEventListener("input", () => { b.src = parseNum(s.value); validate(); });
+    } else {
+      does.innerHTML = `<span class="note">—</span>`;
+    }
+    tr.querySelector("button").addEventListener("click", () => { cfg.buttons.splice(i, 1); renderButtons(); validate(); });
+    tb.appendChild(tr);
+  });
+  $("add-button").disabled = cfg.buttons.length >= info.maxButtons;
+}
+$("add-button").addEventListener("click", () => {
+  const used = new Set(cfg.buttons.map((b) => b.pin));
+  const pin = info.pins.find((p) => !used.has(p)) ?? info.pins[0];
+  cfg.buttons.push({ pin, action: "none" });
+  renderButtons(); validate();
+});
+
+// Same rules as configValidate() in the firmware, so problems show before saving.
+function validate() {
+  const errs = [];
+  const byte = (n) => Number.isInteger(n) && n >= 0 && n <= 255;
+  if (!cfg.preset.trim()) errs.push("Give the monitor a name.");
+  if (!byte(cfg.vcp)) errs.push("VCP code must be 0x00–0xFF.");
+  if (!byte(cfg.src)) errs.push("Source address must be 0x00–0xFF.");
+  if (cfg.inputs.length === 0) errs.push("Add at least one input.");
+  cfg.inputs.forEach((inp, i) => {
+    if (!inp.name.trim()) errs.push(`Input ${i + 1}: needs a name.`);
+    if (!(Number.isInteger(inp.value) && inp.value >= 0 && inp.value <= 0xFFFF)) errs.push(`Input ${i + 1}: value must be 0x00–0xFFFF.`);
+  });
+  const seen = new Map();
+  cfg.buttons.forEach((b, i) => {
+    if (seen.has(b.pin)) errs.push(`Key ${i + 1}: pin ${b.pin} is already used by key ${seen.get(b.pin) + 1}.`);
+    seen.set(b.pin, i);
+    if (b.action === "input" && !(b.input >= 0 && b.input < cfg.inputs.length)) errs.push(`Key ${i + 1}: pick an input.`);
+    if (b.action === "vcp" && !(byte(b.vcp) && byte(b.src) && Number.isInteger(b.value) && b.value >= 0 && b.value <= 0xFFFF))
+      errs.push(`Key ${i + 1}: VCP code, value and source need valid numbers.`);
+  });
+  $("errors").replaceChildren(...errs.map((e) => Object.assign(document.createElement("li"), { textContent: e })));
+  const dirty = JSON.stringify(cfg) !== JSON.stringify(saved);
+  $("save").disabled = errs.length > 0 || !dirty;
+  $("revert").disabled = !dirty;
+  if (!errs.length) setStatus("save-status", dirty ? "Unsaved changes." : "Saved on the switch.", dirty ? "warn" : "ok");
+  else setStatus("save-status", "");
+  return errs.length === 0;
+}
+
+function toFirmware(c) {
+  return {
+    preset: c.preset.trim(), vcp: c.vcp, src: c.src, self: c.self ?? -1,
+    inputs: c.inputs.map((i) => ({ name: i.name.trim(), value: i.value })),
+    buttons: c.buttons.map((b) => b.action === "input" ? { pin: b.pin, action: "input", input: b.input }
+      : b.action === "vcp" ? { pin: b.pin, action: "vcp", vcp: b.vcp, src: b.src, value: b.value }
+      : { pin: b.pin, action: "none" }),
+  };
+}
+
+$("save").addEventListener("click", async () => {
+  if (!validate()) return;
+  try {
+    setStatus("save-status", "Saving… (the switch's screen blinks once)");
+    const r = await link.request({ cmd: "set", config: toFirmware(cfg) });
+    if (!r.ok) { setStatus("save-status", "The switch rejected it: " + r.error, "bad"); return; }
+    const s = await link.request({ cmd: "save" }, 6000);
+    if (!s.ok) { setStatus("save-status", "Saving to flash failed.", "bad"); return; }
+    saved = (await link.request({ cmd: "get" })).config;
+    loadEditor(structuredClone(saved));
+    log("Settings saved", "ok");
+  } catch (e) { setStatus("save-status", e.message, "bad"); }
+});
+$("revert").addEventListener("click", () => loadEditor(structuredClone(saved)));
+
+$("scan").addEventListener("click", async () => {
+  try {
+    const r = await link.request({ cmd: "scan" });
+    const msg = `DDC/CI ${r.ddc ? "found" : "NOT found"}, EDID ${r.edid ? "found" : "NOT found"} — devices: ${r.devices.map(hex).join(" ")}`;
+    setStatus("tools-status", msg, r.ddc ? "ok" : "bad");
+    log("Scan: " + msg);
+  } catch (e) { setStatus("tools-status", e.message, "bad"); }
+});
+$("factory").addEventListener("click", async () => {
+  if (!confirm("Replace all settings on the switch with the factory defaults?")) return;
+  try {
+    await link.request({ cmd: "reset" }, 6000);
+    saved = (await link.request({ cmd: "get" })).config;
+    loadEditor(structuredClone(saved));
+    log("Factory settings restored", "ok");
+  } catch (e) { setStatus("tools-status", e.message, "bad"); }
+});
+$("reboot").addEventListener("click", async () => {
+  try { await link.request({ cmd: "reboot" }); } catch {}
+  log("Restarting… connect again in a few seconds.");
+  await link.close();
+});
+
+// ---------------------------------------------------------------- install
+let localFirmware = null;
+$("fw-file").addEventListener("change", (e) => {
+  localFirmware = e.target.files[0] || null;
+  if (localFirmware) setStatus("install-status", `Using ${localFirmware.name}`, "ok");
+});
+
+$("to-bootloader").addEventListener("click", async () => {
+  try {
+    if (link.port) await link.close();
+    const port = await navigator.serial.requestPort({ filters: [{ usbVendorId: 0x239A }] });
+    // Opening at 1200 baud and closing again tells the board to restart in install mode.
+    await port.open({ baudRate: 1200 });
+    await port.close();
+    setStatus("boot-status", "Done: wait for the RPI-RP2 drive, then do step 2.", "ok");
+  } catch (e) {
+    if (e.name === "NotFoundError") return;
+    // The board often drops off USB mid-close because it is already rebooting.
+    setStatus("boot-status", "Sent. If no RPI-RP2 drive appears, use BOOT + RESET.", "warn");
+  }
+});
+
+$("install").addEventListener("click", async () => {
+  if (!("showSaveFilePicker" in window)) {
+    setStatus("install-status", "This browser can't save to a chosen drive; use the download link and drag the file.", "bad");
+    return;
+  }
+  try {
+    let blob = localFirmware;
+    if (!blob) {
+      setStatus("install-status", "Downloading firmware…");
+      const r = await fetch("firmware.uf2", { cache: "no-store" });
+      if (!r.ok) throw new Error("firmware.uf2 isn't on this site yet");
+      blob = await r.blob();
+    }
+    const handle = await window.showSaveFilePicker({
+      suggestedName: "firmware.uf2",
+      types: [{ description: "UF2 firmware", accept: { "application/octet-stream": [".uf2"] } }],
+    });
+    const w = await handle.createWritable();
+    await w.write(blob);
+    await w.close();
+    setStatus("install-status", "Copied. The switch restarts with the new firmware.", "ok");
+  } catch (e) {
+    if (e.name === "AbortError") return;
+    setStatus("install-status", e.message, "bad");
+  }
+});
+</script>
+</body>
+</html>

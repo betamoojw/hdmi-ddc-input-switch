@@ -1,0 +1,24 @@
+# PlatformIO
+.pio/
+.vscode/.browse.c_cpp.db*
+.vscode/c_cpp_properties.json
+.vscode/launch.json
+.vscode/ipch
+
+# FreeCAD: generated documents and backups (rebuilt from case/*.py)
+case/build/
+*.FCBak
+__pycache__/
+
+# Built firmware copied next to the web page for local testing (CI publishes it)
+web/firmware.uf2
+web/print/
+
+# Machine-specific tool config
+.mcp.json
+.claude/settings.local.json
+
+# OS clutter
+Thumbs.db
+desktop.ini
+.DS_Store

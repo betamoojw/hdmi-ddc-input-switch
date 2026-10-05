@@ -1,0 +1,28 @@
+[
+  {
+    "id": "lg-ultragear",
+    "name": "LG UltraGear",
+    "vcp": 244,
+    "src": 80,
+    "inputs": [
+      { "name": "HDMI 1", "value": 144 },
+      { "name": "HDMI 2", "value": 145 },
+      { "name": "DP", "value": 208 },
+      { "name": "USB-C", "value": 209 }
+    ],
+    "notes": "LG ignores the standard input-select. Uses VCP 0xF4 sent from source address 0x50. Tested on the 45GR75DC-B."
+  },
+  {
+    "id": "mccs-standard",
+    "name": "MCCS standard",
+    "vcp": 96,
+    "src": 81,
+    "inputs": [
+      { "name": "DP 1", "value": 15 },
+      { "name": "DP 2", "value": 16 },
+      { "name": "HDMI 1", "value": 17 },
+      { "name": "HDMI 2", "value": 18 }
+    ],
+    "notes": "Standard DDC/CI input select (VCP 0x60 from 0x51). Values vary by vendor; USB-C has no standard value (Dell uses 0x1B). Use Try to find yours."
+  }
+]
