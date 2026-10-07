@@ -93,7 +93,7 @@ Unsolicited events (button presses, boot scan) are emitted as `{"event":…}` li
 
 ### Info screen
 
-PicoDVI 80-column text mode (`DVI_RES_640x240p60`); fallback 1-bit 640×480 or 8-bit 320×240 if the monitor rejects it. Runs on core 1. Call `Wire.setClock(50000)` **after** video starts (PicoDVI changes the system clock).
+PicoDVI 1-bit graphics, 640×480 (`DVIGFX1`, `DVI_RES_640x480p60`), drawn with Adafruit GFX and Noto Sans bitmap fonts: title with a version pill, framed Keys / Monitor / Tips panels (a Last command panel would always show the switch's own input), the switch's own input highlighted, setup address and uptime in the footer (was 80-column text until 2026-10-06). Video only while the screen is in use (see Progress). Runs on core 1. Call `Wire.setClock(50000)` **after** video starts (PicoDVI changes the system clock).
 
 ```
  HDMI-DDC INPUT SWITCH  v1.0.0          Preset: LG UltraGear (VCP F4 / src 50)
@@ -176,14 +176,18 @@ Workflow: Claude edits `case.py` → runs it via the MCP → reviews screenshots
 
 - **2026-10-05 — Phase 8 (case) printed and assembled; keys wired and working.** Second case print (board in the back section, tight port holes with plug recesses and lid tabs). Keys wired with 22 AWG stranded silicone wire: one ground wire window-stripped along the same pin of every switch (pins too short for two wires), one signal wire per key to A0–A3, soldered from the board's underside. Wiring pictures in the Guide (`web/images/wiring-switches.svg`).
 
+- **2026-10-06 — Video on demand:** with the Feather's video always on, the LG jumped to HDMI 2 whenever the active input slept. Now `screenVideo()` detaches the DVI pins (GPIO 16–23) so the port is dark; the switch's own key turns the picture on (300 ms before the DDC command), any other input turns it off, and it times out after 5 minutes. PicoDVI keeps running; DDC is unaffected.
+
+- **2026-10-06 — Info screen restyled:** 640×480 1-bit graphics with framed panels instead of the 8×8 text mode. Fonts: Noto Sans (OFL; best of ten open fonts in a 1-bit side-by-side) rendered to GFX bitmap fonts at 28/17/15/14 px by `tools/gfxfont.py` (`src/fonts/`); Adafruit's FreeSans looked too big once the monitor scaled 480 lines to 1440. New serial command `screenshot` sends the framebuffer as hex rows; `tools/screenshot.py COM11 out.png` saves it (layout checks, docs).
+
 ## Hardware test checklist
 
 - [x] Boot scan shows `0x37` and `0x50`
 - [ ] Switch DP → USB-C → HDMI 1 → HDMI 2 from each button and serial
 - [x] Switching works while the monitor displays a *different* input
 - [x] Monitor accepts the text-mode video timing
-- [ ] With **Auto Input Switch off**, monitor does not jump to HDMI 2 when the PC sleeps/reboots
-- [ ] Monitor still enters standby when the active input goes idle (if not: blank video after a timeout)
+- [x] Monitor does not jump to HDMI 2 when the PC sleeps (2026-10-06, with on-demand video; Auto Input Switch setting no longer matters)
+- [x] Monitor still enters standby when the active input goes idle (HDMI 2 is dark unless the info screen is in use)
 - [ ] Monitor power cycle → next button press still works
 - [ ] Save config → brief video glitch only → config persists across power cycle
 - [ ] Factory-reset combo works
@@ -193,7 +197,7 @@ Workflow: Claude edits `case.py` → runs it via the MCP → reviews screenshots
 | Risk | Mitigation |
 |---|---|
 | Monitor ignores DDC on an inactive input | Always-on video (D4) makes HDMI 2 a live source |
-| LG auto-input grabs HDMI 2 | Document: disable Auto Input Switch in OSD |
+| LG auto-input grabs HDMI 2 | Seen 2026-10-06. Fixed in firmware: video only while the info screen is in use (see Progress) |
 | Monitor never sleeps with a live source | Test; add video-blank timeout if needed |
 | Text-mode timing rejected | Fall back to 640×480 1-bit |
 | PicoDVI clock change breaks I²C timing | Re-apply `Wire.setClock` after `display.begin()` |

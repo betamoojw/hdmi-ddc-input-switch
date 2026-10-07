@@ -2,6 +2,7 @@
 #include <ArduinoJson.h>
 #include "app.h"
 #include "config.h"
+#include "screen.h"
 
 static const size_t LINE_MAX = 1536;
 static char  line[LINE_MAX];
@@ -177,6 +178,16 @@ static void handleJson(const char* text) {
     appConfigChanged();
     doc["ok"] = saved;
     doc["saved"] = saved;
+  } else if (!strcmp(cmd, "screenshot")) {
+    // the info screen's framebuffer: this reply, then one "#<hex>" line per pixel row
+    // (1 bit per pixel, MSB first, 1 = white); for docs and for checking the layout
+    int w, h;
+    doc["ok"] = screenSize(w, h);
+    doc["w"] = w;
+    doc["h"] = h;
+    reply(doc);
+    if (w > 0) screenDump(Serial);
+    return;
   } else if (!strcmp(cmd, "reboot")) {
     doc["ok"] = true;
     reply(doc);

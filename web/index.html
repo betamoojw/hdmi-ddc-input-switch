@@ -178,7 +178,7 @@
       <h2>Monitor setup</h2>
       <ul>
         <li>Make sure <b>DDC/CI</b> is on in the monitor's menu, if it has that setting.</li>
-        <li>Turn off <b>Auto Input Switch</b> (LG) or anything like it. Otherwise the monitor may jump to the switch's info screen whenever a computer sleeps.</li>
+        <li>The switch's HDMI port stays dark except while you're looking at its info screen, so the monitor won't jump to it when a computer sleeps, and can still go to standby. If yours does jump there anyway, turn off <b>Auto Input Switch</b> (LG) or anything like it.</li>
         <li>LG UltraGear monitors ignore the standard input command. The <i>LG UltraGear</i> preset uses LG's own command, tested on the 45GR75DC-B.</li>
       </ul>
     </section>
@@ -186,12 +186,13 @@
     <section class="panel" id="g-use">
       <h2>Using it</h2>
       <ul>
-        <li><b>Keys</b> switch the monitor to their input. The key for the switch's own port (HDMI 2 here) shows the info screen.</li>
+        <li><b>Keys</b> switch the monitor to their input. The key for the switch's own port (HDMI 2 here) shows the info screen; it goes dark again when you switch away, or after 5 minutes.</li>
         <li><b>R</b> restarts the switch. <b>B</b> is a spare key (the Feather's BOOT button) you can give a job in Configure.</li>
         <li><b>Factory reset</b> without a computer: hold keys 1 and 2 while plugging in USB.</li>
         <li><b>Configure</b> (tab above, Chrome or Edge): connect, then pick a preset or enter your monitor's values, use <b>Try</b> to test inputs, and choose what each key does. Marking <i>This computer</i> makes Try switch back after 10 seconds.</li>
         <li><b>Install firmware</b> (tab above) updates the switch. Your settings are kept.</li>
       </ul>
+      <img src="images/info-screen.png" alt="The info screen: title with version, a Keys panel listing each key and its input with HDMI 2 highlighted as this screen, a Monitor panel with the preset and DDC status, a Tips panel, and the set-up address with uptime at the bottom">
     </section>
 
     <section class="panel" id="g-presets">
@@ -212,7 +213,7 @@
         <tbody>
           <tr><td>Scan doesn't find DDC/CI (0x37)</td><td>Check the HDMI cable and port, and that DDC/CI is on in the monitor's menu. Some monitors stop answering in deep standby: wake them first.</td></tr>
           <tr><td>"ACK" but the input doesn't change</td><td>The monitor heard the command but uses different values: see <a href="#g-presets">Adding a monitor</a>.</td></tr>
-          <tr><td>The info screen says "no signal"</td><td>The Feather's HDMI must be in the port marked as <i>The switch</i>, and the board needs USB power.</td></tr>
+          <tr><td>The info screen says "no signal"</td><td>Press the switch's own key: the picture only turns on then, for 5 minutes. Also check that the Feather's HDMI is in the port marked as <i>The switch</i>, and that the board has USB power.</td></tr>
           <tr><td>A key does nothing</td><td>Check its wiring to the right pin and to GND, and that the key has an action in Configure.</td></tr>
           <tr><td>Install mode doesn't show RPI-RP2</td><td>Hold <b>BOOT</b> (the B button, or the board's button), tap <b>RESET</b> (R), release BOOT.</td></tr>
           <tr><td>Connect lists nothing</td><td>Use Chrome or Edge on a computer, and close any other program using the switch's serial port.</td></tr>

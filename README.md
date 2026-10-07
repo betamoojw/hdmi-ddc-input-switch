@@ -39,6 +39,8 @@ each [release](https://github.com/jeyeager65/hdmi-ddc-input-switch/releases) too
 | `case/` | Parametric FreeCAD scripts for the case (`case.py`), keycaps (`keycaps.py`), test prints (`coupon.py`), assembly preview (`assembly.py`), build-step scenes (`steps.py`), GUI preview colours (`show.py`), guide pictures (`render.py`) |
 | `case/export/` | Print-ready STL / 3MF files |
 | `tools/version.py` | Stamps the firmware version from the git tag |
+| `tools/gfxfont.py` | Makes the info screen's bitmap fonts (see `src/fonts/`) |
+| `tools/screenshot.py` | Saves the info screen as a PNG over USB serial (`python tools/screenshot.py COM11 out.png`) |
 | `.github/workflows/firmware.yml` | CI: build; on tags, release + publish the page |
 | `PLAN.md` | Design decisions, protocol, progress and test checklist |
 
@@ -55,7 +57,7 @@ To flash, put the board in install mode (hold BOOT, tap RESET, or use the page's
 Install tab) and copy `firmware.uf2` to the `RPI-RP2` drive. On Windows, `pio run -t
 upload` needs a Zadig driver for picotool; copying the file doesn't.
 
-Serial at 115200: one JSON object per line (`{"cmd":"version|get|set|save|send|raw|scan|reset|reboot|bootloader"}`),
+Serial at 115200: one JSON object per line (`{"cmd":"version|get|set|save|send|raw|scan|reset|reboot|bootloader|screenshot"}`),
 plus `1`–`8` / `s` / `?` shortcuts for bench testing. See `src/protocol.h` and `PLAN.md`.
 
 ## Web page, locally
@@ -118,4 +120,5 @@ One-time setup: **Settings → Pages → Source: GitHub Actions**.
 ## License
 
 MIT, see [LICENSE](LICENSE). That covers the firmware, the web page and the case and
-keycap designs.
+keycap designs. The info screen's fonts are Noto Sans under the SIL Open Font
+License (see `src/fonts/README.md`).

@@ -12,14 +12,24 @@ static void remember(const char* label, uint16_t value, bool ack) {
   status.lastAck = ack;
   status.lastMillis = millis();
   status.hasLast = true;
-  screenTick();
 }
+
+static const uint32_t VIDEO_SETTLE_MS = 300;   // signal up before the monitor looks for it
 
 bool appSendInput(uint8_t index) {
   if (index >= config.numInputs) return false;
   const InputDef& in = config.inputs[index];
+  // The info screen only has a picture while it's being looked at (see screenVideo).
+  bool self = index == config.selfInput;
+  if (self && !screenVideoOn()) {
+    screenVideo(true);
+    delay(VIDEO_SETTLE_MS);
+  } else if (self) {
+    screenVideo(true);                          // restart its timeout
+  }
   bool ok = ddcSetVcp(config.src, config.vcp, in.value);
   remember(in.name, in.value, ok);
+  if (!self) screenVideo(false);
   return ok;
 }
 
